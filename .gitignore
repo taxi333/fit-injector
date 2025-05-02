@@ -1,5 +1,5 @@
 # Maven build folder
-/target/
+# /target/
 
 # Eclipse/IntelliJ project files
 *.iml
