@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"> <!-- crucial for iPhone 16 -->
+<title>FIT Incline Injector</title>
+
+<!-- Minimal, no framework. Use media queries for > iPhone sizes -->
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:0;background:#f6f8fa}
+main{max-width:600px;margin:auto;padding:2rem}
+.label{margin-top:1rem;font-size:.9rem;color:#555}
+input[type=file]{width:100%;padding:1.2rem;border:2px dashed #999;background:#fff;border-radius:12px}
+button{width:100%;padding:1rem;font-size:1.1rem;margin-top:1.5rem;border:0;border-radius:12px;background:#007aff;color:#fff}
+.progress{height:6px;background:#d0d7de;border-radius:3px;margin-top:.5rem;overflow:hidden}
+.progress div{height:100%;width:0;background:#007aff}
+@media (orientation:landscape){
+  main{padding:1rem 2rem}
+}
+</style>
+</head>
+<body>
+<main>
+  <h2>Incline Injector</h2>
+
+  <div class="label">Upload your treadmill .FIT file</div>
+  <input id="fit" type="file" accept=".fit">
+
+  <div class="label">Start latitude / longitude</div>
+  <input id="lat" type="number" step="any" value="42.036369">
+  <input id="lon" type="number" step="any" value="-91.638498">
+
+  <div class="label">Optional altitude (m) / bearing (°)</div>
+  <input id="alt" type="number" step="any" value="0">
+  <input id="bearing" type="number" step="any" value="0">
+
+  <label>
+    <input id="virtual" type="checkbox" checked>
+    Mark as Virtual Run
+  </label>
+
+  <div class="label">Grade (%)</div>
+  <input id="grade" type="number" min="0" max="100" value="10">
+
+  <div class="label">Output filename (optional)</div>
+  <input id="name" type="text" placeholder="custom_name.fit">
+
+  <button id="go">Inject</button>
+
+  <div class="progress" hidden><div></div></div>
+  <div id="msg" style="margin-top:1rem;color:#007aff"></div>
+</main>
+
+<script>
+const fit   = document.getElementById('fit');
+const goBtn = document.getElementById('go');
+const bar   = document.querySelector('.progress');
+const barIn = bar.firstElementChild;
+const msg   = document.getElementById('msg');
+
+goBtn.onclick = async () => {
+  if (!fit.files[0]) return alert('Choose a FIT file first!');
+  const data = new FormData();
+  data.append('file', fit.files[0]);
+  data.append('lat', document.getElementById('lat').value || 37.7749);
+  data.append('lon', document.getElementById('lon').value || -122.4194);
+  data.append('alt', document.getElementById('alt').value || 0);
+  data.append('bearing', document.getElementById('bearing').value || 0);
+  if (document.getElementById('virtual').checked) data.append('virtual', 'true');
+
+  bar.hidden = false; barIn.style.width = '0%'; msg.textContent = '';
+
+  const r = await fetch('/inject', {
+    method:'POST',
+    body:data,
+  });
+
+  if (!r.ok) { msg.textContent = 'Server error :('; return; }
+
+  /* track progress (Safari 17 supports streaming) */
+  const reader = r.body.getReader();
+  const chunks = [];
+  let received = 0,
+      total    = +r.headers.get('Content-Length') || 1;
+  while (true) {
+    const {done,value} = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    barIn.style.width = `${100*received/total}%`;
+  }
+  const blob = new Blob(chunks, {type:'application/octet-stream'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = fit.files[0].name.replace('.fit','_incline.fit');
+  a.click(); URL.revokeObjectURL(url);
+
+  bar.hidden = true; msg.textContent = 'Done!';
+};
+</script>
+</body>
+</html>
+

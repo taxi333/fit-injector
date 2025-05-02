@@ -1,0 +1,8 @@
+version: "3.8"
+
+services:
+  fit-injector:
+    build: .
+    ports:
+      - "8080:8080"    # container 8080 → host 8080
+    restart: unless-stopped
