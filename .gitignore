@@ -1,0 +1,15 @@
+# Maven build folder
+/target/
+
+# Eclipse/IntelliJ project files
+*.iml
+.idea/
+/*.ipr
+/*.iws
+
+# VS Code settings
+.vscode/
+
+# Mac OS files
+.DS_Store
+
