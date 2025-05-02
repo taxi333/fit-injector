@@ -15,6 +15,7 @@ This is a simple application to inject a grade into a treadmill workout `.fit` f
 
 * Java 21
 * Maven 3.8+
+* Official Garmin FIT SDK (v21.158) installed in your local Maven repository (via `mvn install:install-file` on `lib/fit.jar`) or present at `lib/fit.jar`
 * Docker & Docker Compose (optional, for containerized setup)
 
 ## Installation
@@ -94,4 +95,3 @@ Contributions are welcome! Please fork the repo and open a pull request for any 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
