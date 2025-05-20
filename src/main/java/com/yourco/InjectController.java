@@ -42,6 +42,7 @@ public class InjectController {
                     String.valueOf(lon),
                     String.valueOf(alt),
                     String.valueOf(bearing),
+                    "--grade",
                     String.valueOf(grade),
                     virtual ? "--virtual" : ""
                 };
@@ -58,7 +59,7 @@ public class InjectController {
                     String base = (orig != null)
                                   ? orig.replaceFirst("\\.fit$", "")
                                   : "output";
-                    dlName = base + "_injected_grade_" + grade + ".fit";
+                    dlName = base + "_injected_grade_" + (int)(grade * 100) + ".fit";
                 }
 
                 // 6. Read the injected FIT bytes
