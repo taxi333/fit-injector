@@ -23,7 +23,7 @@ public class InjectController {
             @RequestParam(name="alt",     defaultValue="0")      float alt,
             @RequestParam(name="bearing", defaultValue="0")      double bearing,
             @RequestParam(name="virtual", defaultValue="false")   boolean virtual,
-            @RequestParam(name="grade",   defaultValue="10")      int grade,
+            @RequestParam(name="grade",   defaultValue="0.10")    double grade,
             @RequestParam(name="name",    required=false)         String outputName
             ) throws Exception {
 

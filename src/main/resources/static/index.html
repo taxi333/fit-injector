@@ -66,6 +66,7 @@ goBtn.onclick = async () => {
   data.append('lon', document.getElementById('lon').value || -122.4194);
   data.append('alt', document.getElementById('alt').value || 0);
   data.append('bearing', document.getElementById('bearing').value || 0);
+  data.append('grade', (document.getElementById('grade').value || 10) / 100);
   if (document.getElementById('virtual').checked) data.append('virtual', 'true');
 
   bar.hidden = false; barIn.style.width = '0%'; msg.textContent = '';
