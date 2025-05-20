@@ -60,11 +60,55 @@ public class AddInclineFitGem { // Ensure filename is AddInclineFitGem.java
 
     // ===========================================================
     public static void main(String[] args) throws IOException {
-        if (args.length < 1) { System.err.println(/* Usage */); System.exit(1); }
-        if ("--analyse".equals(args[0])) { if (args.length < 2) { System.err.println("Analyse requires file path"); System.exit(1); } analyse(args[1]); return; }
-        boolean virtual = false; if (args.length > 1 && args[args.length-1].equalsIgnoreCase("--virtual")) { virtual = true; args = java.util.Arrays.copyOf(args, args.length-1); }
-        if (args.length < 5) { System.err.println("Inject requires args: in.fit out.fit lat lon [alt] [bearing] [--virtual]"); System.exit(1); }
-        inject(args, virtual);
+        if (args.length < 1) {
+            System.err.println("Usage:");
+            System.err.println("  Inject: java -cp .:fit.jar AddInclineFit in.fit out.fit lat lon [alt] [bearing] [--virtual] [--grade <value>]");
+            System.err.println("  Analyse: java -cp .:fit.jar AddInclineFit --analyse file.fit");
+            System.err.println("\nOptions:");
+            System.err.println("  --virtual    : Mark activity as virtual run");
+            System.err.println("  --grade <n>  : Set incline grade (default: 0.10 = 10%)");
+            System.exit(1);
+        }
+        if ("--analyse".equals(args[0])) {
+            if (args.length < 2) {
+                System.err.println("Analyse requires file path");
+                System.exit(1);
+            }
+            analyse(args[1]);
+            return;
+        }
+
+        // Parse optional flags
+        boolean virtual = false;
+        double grade = GRADE; // Default to constant value
+        List<String> filteredArgs = new ArrayList<>();
+
+        for (int i = 0; i < args.length; i++) {
+            if ("--virtual".equalsIgnoreCase(args[i])) {
+                virtual = true;
+            } else if ("--grade".equalsIgnoreCase(args[i])) {
+                if (i + 1 < args.length) {
+                    try {
+                        grade = Double.parseDouble(args[i + 1]);
+                        i++; // Skip the next argument since we've consumed it
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error: --grade must be followed by a valid number");
+                        System.exit(1);
+                    }
+                } else {
+                    System.err.println("Error: --grade must be followed by a value");
+                    System.exit(1);
+                }
+            } else {
+                filteredArgs.add(args[i]);
+            }
+        }
+
+        if (filteredArgs.size() < 5) {
+            System.err.println("Inject requires args: in.fit out.fit lat lon [alt] [bearing] [--virtual] [--grade <value>]");
+            System.exit(1);
+        }
+        inject(filteredArgs.toArray(new String[0]), virtual, grade);
     }
 
 
@@ -373,7 +417,7 @@ public class AddInclineFitGem { // Ensure filename is AddInclineFitGem.java
     // ===========================================================
     //  Inject mode (Unchanged from v8 - already correct)
     // ===========================================================
-    private static void inject(String[] a, boolean virtual) throws IOException {
+    private static void inject(String[] a, boolean virtual, double grade) throws IOException {
 
         String inFile = a[0], outFile = a[1];
         double startLat = Double.parseDouble(a[2]);
@@ -381,6 +425,9 @@ public class AddInclineFitGem { // Ensure filename is AddInclineFitGem.java
         float  startAlt = (a.length>4)?Float.parseFloat(a[4]):0f;
         double bearing  = (a.length>5)?Double.parseDouble(a[5]):0.0;
         double cosB=Math.cos(Math.toRadians(bearing)), sinB=Math.sin(Math.toRadians(bearing));
+
+        // Use the provided grade instead of the constant
+        final double finalGrade = grade;
 
         final short finalSubVal = virtual
                         ? findVirtualRunValue()
@@ -669,7 +716,7 @@ public class AddInclineFitGem { // Ensure filename is AddInclineFitGem.java
 
             // Calculate altitude based on the distance and grade
             // Convert all values to float explicitly to avoid lossy conversion errors
-            float targetAlt = startAlt + (float)(distTraveled) * (float)GRADE;
+            float targetAlt = startAlt + (float)(distTraveled) * (float)finalGrade;
 
             // Add random noise to the target altitude if configured
             float alt = targetAlt + (float)(random.nextDouble() - 0.5) * (float)ALTITUDE_NOISE_FACTOR;
@@ -761,7 +808,7 @@ public class AddInclineFitGem { // Ensure filename is AddInclineFitGem.java
 
                 // Calculate ascent based on grade and original distance
                 if (lapDist != null && lapDist > 0) {
-                    lapAscent = Math.round(lapDist * (float)GRADE);
+                    lapAscent = Math.round(lapDist * (float)finalGrade);
                     lapFracAscent = (float)lapAscent / lapDist;
                 }
                 int lapDescent = 0;
